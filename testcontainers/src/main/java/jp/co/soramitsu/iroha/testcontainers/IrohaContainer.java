@@ -97,7 +97,7 @@ public class IrohaContainer extends FailureDetectingExternalResource implements 
         .withEnv("WAIT_TIMEOUT", "0") // don't wait for postgres
         .withEnv(VERBOSITY, verbosity)
         .withNetwork(network)
-        .withExposedPorts(conf.getIrohaConfig().getTorii_port())
+        .withExposedPorts(conf.getIrohaConfig().getTorii_port(), getMappedDefaultPort())
         .withFileSystemBind(conf.getDir().getAbsolutePath(), irohaWorkdir, READ_ONLY)
         .waitingFor(
             Wait.forLogMessage(".*iroha initialized.*\\s", 1)
@@ -212,11 +212,20 @@ public class IrohaContainer extends FailureDetectingExternalResource implements 
   @SneakyThrows
   public URI getToriiAddress() {
     String host = irohaDockerContainer.getContainerIpAddress();
-    int port = irohaDockerContainer.getMappedPort(
-        conf.getIrohaConfig().getTorii_port()
-    );
+    int port = getMappedDefaultPort();
 
     return new URI("grpc", null, host, port, null, null, null);
+  }
+
+  /**
+   * Get the actual mapped port for a default 50051 port exposed by the container.
+   *
+   * @return actual port
+   */
+  public int getMappedDefaultPort() {
+    return irohaDockerContainer.getMappedPort(
+        conf.getIrohaConfig().getTorii_port()
+    );
   }
 
   /**
